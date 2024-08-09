@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Kiosk</title>
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="resources/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="modal fade" id="kiosk-rebooting-modal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Please wait while rebooting...</p>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+    <div class="modal fade" id="kiosk-login-modal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 row">
+                        <label for="kiosk-login-password" class="col-sm-3 col-form-label">Password</label>
+                        <div class="col-sm-9">
+                            <input type="password" class="form-control" id="kiosk-login-password" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="kiosk-login-button" type="button" class="btn btn-primary">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="kiosk-schedule-dialog" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Schedule Action</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Action -->
+          <div class="mb-3 row">
+            <div class="col-sm-6">
+                <select class="form-select " id="kiosk-schedule-action">
+                <option value="on">Turn on display on</option>
+                <option value="reboot">Reboot and turn on display</option>
+                <option value="off">Turn off display</option>                
+                </select>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="kiosk-schedule-hour" id="kiosk-schedule-hour-all" value="*" checked>
+            <label class="form-check-label" for="kiosk-schedule-hour-all">Every Hour</label>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <div class="form-check me-2">
+                <input class="form-check-input" type="radio" name="kiosk-schedule-hour" id="kiosk-schedule-hour-some" value="some">
+                <label class="form-check-label" for="kiosk-schedule-hour-some">At</label>
+            </div>
+            <input type="text" class="form-control w-50" id="kiosk-schedule-hour-list" placeholder="e.g. 5,10,15">
+          </div>
+
+          <br/>
+
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="kiosk-schedule-minute" id="kiosk-schedule-minute-all" value="*" checked>
+            <label class="form-check-label" for="kiosk-schedule-minute-all">Every Minute</label>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <div class="form-check me-2">
+                <input class="form-check-input" type="radio" name="kiosk-schedule-minute" id="kiosk-schedule-minute-some" value="some">
+                <label class="form-check-label" for="kiosk-schedule-minute-some">At</label>
+            </div>
+            <input type="text" class="form-control w-50" id="kiosk-schedule-minute-list" placeholder="e.g. 5,10,15">
+          </div>
+
+          <br/>
+
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="kiosk-schedule-day" id="kiosk-schedule-day-all" value="*" checked>
+            <label class="form-check-label" for="kiosk-schedule-day-all">Every Day</label>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <div class="form-check me-2">
+                <input class="form-check-input" type="radio" name="kiosk-schedule-day" id="kiosk-schedule-day-some" value="value">
+                <label class="form-check-label" for="kiosk-schedule-day-some">At</label>
+            </div>
+            <input type="text" class="form-control w-50" id="kiosk-schedule-day-list" placeholder="e.g. 1,15,30">
+          </div>
+
+          <br/>
+
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="kiosk-schedule-month" id="kiosk-schedule-month-all" checked>
+            <label class="form-check-label" for="kiosk-schedule-month-all">Every Month</label>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <div class="form-check me-2">
+                <input class="form-check-input" type="radio" name="kiosk-schedule-month" id="kiosk-schedule-month-some">
+                <label class="form-check-label" for="kiosk-schedule-month-some">At</label>
+            </div>
+            <input type="text" class="form-control w-50" id="kiosk-schedule-month-list" placeholder="e.g. 1,6,12">
+          </div>
+
+          <hr/>
+  
+          <div>Weekday</div>
+            <div class="mb-3 row">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="kiosk-schedule-weekday-monday">
+                        <label class="form-check-label" for="kiosk-schedule-weekday-monday">Monday</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="kiosk-schedule-weekday-tuesday">
+                        <label class="form-check-label" for="kiosk-schedule-weekday-tuesday">Tuesday</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="kiosk-schedule-weekday-wednesday">
+                        <label class="form-check-label" for="kiosk-schedule-weekday-wednesday">Wednesday</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="kiosk-schedule-weekday-thursday">
+                        <label class="form-check-label" for="kiosk-schedule-weekday-thursday">Thursday</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="kiosk-schedule-weekday-friday">
+                        <label class="form-check-label" for="kiosk-schedule-weekday-friday">Friday</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="kiosk-schedule-weekday-saturday">
+                        <label class="form-check-label" for="kiosk-schedule-weekday-saturday">Saturday</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="kiosk-schedule-weekday-sunday">
+                        <label class="form-check-label" for="kiosk-schedule-weekday-sunday">Sunday</label>
+                    </div>        
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button id="kiosk-schedule-update" type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>    
+
+
+    <div class="container mt-5 d-none" id="kiosk-content">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <ul class="nav nav-tabs card-header-tabs" id="kiosk-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="kiosk-tab-common" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-common" type="button" role="tab">Kiosk</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="kiosk-tab-settings" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-settings" type="button" role="tab">System</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="kiosk-about-settings" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-about" type="button" role="tab">About</button>
+                            </li>                            
+                        </ul>
+                        <div class="align-self-center">
+                            <button class="btn btn-sm btn-outline-primary" id="kiosk-logout-button">Logout</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="tab-content" id="kiosk-tabs-content" >
+                            <div class="tab-pane fade show active" id="kiosk-tab-pane-common" role="tabpanel">
+
+                                <!-- Template Configuration -->
+                                <h3>Screen</h3>
+                                <div class="mb-3 row">
+                                    <div class="col-sm-12">
+                                        <p>Select the website which should be displayed.</p>
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label for="kiosk-website" class="col-sm-3 col-form-label form-label">Website:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" id="kiosk-website" name="kiosk-website">
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label for="kiosk-resolution" class="col-sm-3 col-form-label form-label">Resolution:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" readonly class="form-control-plaintext" id="kiosk-resolution" name="kiosk-resolution">
+                                    </div>
+                                </div>                                
+
+                                <div class="mb-3 row">
+                                    <label for="kiosk-scale" class="col-sm-3 col-form-label form-label">Scale:</label>
+                                    <div class="col-sm-2">
+                                        <input type="number" class="form-control" id="kiosk-scale" name="kiosk-scale">                                        
+                                    </div>
+                                    <label class="col-sm-3 col-form-label form-label">Percent</label>                              
+                                </div>
+
+                                <div class="mb-3 row">
+                                    <label for="kiosk-orientation" class="col-sm-3 col-form-label form-label">Orientation:</label>
+                                    <div class="col-sm-2">
+                                        <select class="form-select" id="kiosk-orientation">
+                                            <option selected value="normal">0</option>
+                                            <option value="right">90</option>
+                                            <option value="inverted">180</option>
+                                            <option value="left">270</option>
+                                          </select>
+                                    </div>
+                                    <label class="col-sm-3 col-form-label form-label">Degrees</label>                                                                      
+                                </div>
+
+                                <div class="text-end">
+                                    <button type="button" id="kiosk-screen-off" class="btn btn-outline-secondary">Turn Off</button>
+                                    <button type="button" id="kiosk-screen-on" class="btn btn-outline-secondary">Turn On</button>
+                                    <button type="button" id="kiosk-screen-save" class="btn btn-primary">Save</button>
+                                </div>
+                                
+                                <hr>
+
+                                <h3>Preview</h3>
+                                <div class="mb-3 position-relative">
+                                    <img id="kiosk-screenshot" class=" mx-auto d-block img-thumbnail shadow">
+                                    <div id="kiosk-screenshot-loading" class="position-absolute top-50 start-50 translate-middle d-none">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <button type="button" id="kiosk-screenshot-reload" class="btn btn-primary">Reload</button>
+                                </div>
+
+                                <hr>
+
+                                <h3>Schedule</h3>
+                                <template id="kiosk-schedule-template">
+                                    <li class="list-group-item">
+                                        <div class="d-none">
+                                            <span class="kiosk-schedule-action"></span>
+                                            <span class="kiosk-schedule-minute"></span>
+                                            <span class="kiosk-schedule-hour"></span>
+                                            <span class="kiosk-schedule-day"></span>
+                                            <span class="kiosk-schedule-month"></span>
+                                            <span class="kiosk-schedule-weekday"></span>
+                                        </div>
+                                        <div class="kiosk-schedule-description"></div>
+                                        <div class="text-end">
+                                            <button type="button" class="btn btn-outline-secondary kiosk-schedule-edit">Edit</button>
+                                            <button type="button" class="btn btn-outline-secondary kiosk-schedule-delete">Delete</button>
+                                        </div>
+                                    </li>
+                                </template>
+                                <ul id="kiosk-schedule" class="list-group list-group-flush"></ul>
+                                <div class="text-end mt-4">
+                                    <button type="button" id="kiosk-schedule-add" class="btn btn-primary">Add</button>
+                                    <button type="button" id="kiosk-schedule-save" class="btn btn-primary">Save</button>
+                                </div>
+
+                            </div>
+
+                            <div class="tab-pane fade" id="kiosk-tab-pane-settings" role="tabpanel">
+
+                                <!-- Password -->
+                                <h3>Password</h3>
+                                <div class="mb-3 row">
+                                    <label for="kiosk-new-password" class="col-sm-3 col-form-label form-label">New Password:</label>
+                                    <div class="col-sm-6">
+                                        <input type="password" class="form-control" id="kiosk-new-password" name="kiosk-new-password">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 row">
+                                    <label for="kiosk-new-password-confirm" class="col-sm-3 col-form-label form-label">Confirm Password:</label>
+                                    <div class="col-sm-6">
+                                        <input type="password" class="form-control" id="kiosk-new-password-confirm" name="kiosk-new-password-confirm">
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <button id="kiosk-password-save" type="button" class="btn btn-primary">Update Password</button>
+                                </div>
+
+                                <hr>
+                                <h3>Hostname</h3>
+                                <div class="mb-3 row">
+                                    <label for="kiosk-hostname" class="col-sm-3 col-form-label form-label">Hostname:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" id="kiosk-hostname" name="kiosk-hostname">
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-primary" id="kiosk-hostname-update">Update Hostname</button>
+                                </div>
+
+                                <hr/>
+                                <h3>Certificate</h3>
+                                <p>
+                                    The connection is encrypted by an auto generated self signed certificate, a new cert can be regenerated at any time.
+                                    But you can also specify your own, just upload the pfx file and provide if needed the password to read the pfx.
+                                </p>
+                                <p>
+                                    The new cert will be used upon the next reboot. In case you recover the device the cert will be deleted and a new one is generated.
+                                </p>
+
+                                <div class="mb-3 row">
+                                    <label for="kiosk-cert-pfx" class="col-sm-3 col-form-label form-label">Custom Certificate</label>
+                                    <div class="col-sm-9">
+                                        <input class="form-control" type="file" id="kiosk-cert-pfx" accept=".pfx">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 row">
+                                    <label for="kiosk-cert-password" class="col-sm-3 col-form-label form-label">Password (Optional):</label>
+                                    <div class="col-sm-9">
+                                        <input type="password" class="form-control" id="kiosk-cert-kiosk">
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <a href="cert" class="btn btn-secondary">Download DER</a>
+                                    <button type="button" class="btn btn-primary" id="kiosk-cert-generate">Generate</button>
+                                    <button type="button" class="btn btn-primary" id="kiosk-cert-upload">Upload PFX</button>
+                                </div>
+
+                                <hr/>
+                                <h3>SSH</h3>
+                                <p>
+                                    Activate or deactivate the ssh service for added security.
+                                </p>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="kiosk-ssh-status">
+                                    <label class="form-check-label" for="kiosk-ssh-status">Enable/Disable SSH</label>
+                                </div>
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-danger" id="kiosk-ssh-save">Save</button>
+                                </div>
+
+                                <hr/>
+                                <h3>Reboot</h3>
+                                <p>
+                                    In case you run into issues, you can safely reboot the system at any time.
+                                </p>
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-danger" id="kiosk-reboot">Reboot</button>
+                                </div>
+
+                            </div>
+
+                            <div class="tab-pane fade" id="kiosk-tab-pane-about" role="tabpanel">
+                                <a href="https://github.com/thsmi/kiosk">https://github.com/thsmi/kiosk</a>
+
+                                <div>
+                                    Made available under the <a href="https://raw.githubusercontent.com/thsmi/kiosk/main/LICENSE">GNU AFFERO GENERAL PUBLIC LICENSE</a> 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="resources/bootstrap.bundle.min.js"></script>
+    <script src="resources/apps.js"></script>
+</body>
+</html>
