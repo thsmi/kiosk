@@ -141,34 +141,20 @@ class App:
             "delay" : self.__motion_sensor.get_delay()
         })
 
-    def on_enable_motion_sensor(self):
-        """
-        Enables the motion sensor.
-        """
-        if not self.__motion_sensor.is_enabled():
-            self.__motion_sensor.enable()
 
-        self.__config.enable_motion_sensor()
-
-        return self.on_get_motion_sensor()
-
-    def on_disable_motion_sensor(self):
-        """
-        Disables the motion sensor.
-        """
-        self.__motion_sensor.disable()
-        self.__config.disable_motion_sensor()
-
-        return self.on_get_motion_sensor()
-
-    def on_set_motion_sensor_delay(self):
+    def on_set_motion_sensor(self):
         """
         Sets the motion sensor's delay.
         """
         data = request.json
-
-        self.__motion_sensor.set_delay(data["delay"])
         self.__config.set_motion_sensor_delay(data["delay"])
+
+        if data["enabled"] is True:
+            self.__config.enable_motion_sensor()
+        else:
+            self.__config.disable_motion_sensor()
+
+        self.__system.reboot()
 
         return self.on_get_motion_sensor()
 
@@ -382,11 +368,7 @@ class App:
         app.add_url_rule(
             '/motionsensor', view_func=self.on_get_motion_sensor, methods=["GET"])
         app.add_url_rule(
-            '/motionsensor/enable', view_func=self.on_enable_motion_sensor, methods=["GET", "POST"])
-        app.add_url_rule(
-            '/motionsensor/disable', view_func=self.on_disable_motion_sensor, methods=["GET", "POST"])
-        app.add_url_rule(
-            '/motionsensor/delay', view_func=self.on_set_motion_sensor_delay, methods=["POST"])        
+            '/motionsensor', view_func=self.on_set_motion_sensor, methods=["POST"])
 
         app.add_url_rule("/ssh", view_func=self.on_get_ssh, methods=["GET"])
         app.add_url_rule("/ssh/enable", view_func=self.on_enable_ssh, methods=["POST","GET"])

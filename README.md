@@ -14,4 +14,7 @@ It will also activate automatic updates.
 
 Currently only one display on the first HDMI port is supported.
 
+# Motion Sensor 
+
+Connect a HC-SR501 Passive Infrared, it typically needs three wires 5V, Ground and a signal line. Connect the signal line to GPIO pin 18. The trigger selection jumper on the HC-SR501 Sensor needs to be in repeat, single shot won't work.
 

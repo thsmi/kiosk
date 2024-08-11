@@ -639,12 +639,14 @@ async function loadSystem() {
  */
 async function saveMotionSensor() {
     const delay = document.getElementById("kiosk-motionsensor-delay").value;
-    await postJson("motionsensor/delay", { "delay" : delay});
+    const enabled = document.getElementById("kiosk-motionsensor-status").checked
 
-    if (document.getElementById("kiosk-motionsensor-status").checked)
-        await postJson("motionsensor/enable", {});
-    else 
-        await postJson("motionsensor/disable", {});
+    await postJson("motionsensor", { 
+        "delay" : delay,
+        "enabled" : enabled
+    });
+
+    await awaitReboot();
 }
 
 /**
