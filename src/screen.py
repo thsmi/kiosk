@@ -8,10 +8,17 @@ import re
 CONFIG_BROWSER = pathlib.Path("/etc/kiosk/browser.conf")
 CONFIG_XINITRC = pathlib.Path("/etc/kiosk/xinitrc")
 
+SCREEN = "HDMI-1"
 REGEX_XRANDR =  r"^HDMI-1 connected primary (?P<x_resolution>\d+)x(?P<y_resolution>\d+)\S+ \S+ (?P<orientation>\S+)"
 
-CMD_DISPLAY_ON = "DISPLAY=:0 xset dpms force on && xset s off && xset -dpms && xset s noblank"
-CMD_DISPLAY_OFF = "DISPLAY=:0 xset dpms force off"
+CMD_DISPLAY = "DISPLAY=:0"
+CMD_DISPLAY_STATUS = "xset -q"
+CMD_DISPLAY_FORCE_ON = "xset dpms force on"
+CMD_DISPLAY_FORCE_OFF = "xset dpms force off"
+CMD_DISPLAY_SCREENSAVER_OFF = "xset s off"
+CMD_DISPLAY_SCREENSAVER_BLANK_OFF = "xset s noblank"
+CMD_DISPLAY_POWER_MANAGEMENT_OFF = "xset -dpms"
+
 
 class Screen:
     """
@@ -77,18 +84,38 @@ class Screen:
         """
         Turns the display on and ensures the screensaver is disabled.
         """
-        #subprocess.run(["/bin/bash", "-c", CMD_DISPLAY_ON], check=True)
-        subprocess.run(["/bin/bash", "-c", "DISPLAY=:0 xset dpms force on"], check=True)
-        subprocess.run(["/bin/bash", "-c", "DISPLAY=:0 xset s off"], check=True)
-        subprocess.run(["/bin/bash", "-c", "DISPLAY=:0 xset -dpms"], check=True)
-        subprocess.run(["/bin/bash", "-c", "DISPLAY=:0 xset s noblank"], check=True)
+
+        subprocess.run(
+            ["/bin/bash", "-c", f"{CMD_DISPLAY} {CMD_DISPLAY_FORCE_ON}"], check=True)
+        subprocess.run(
+            ["/bin/bash", "-c", f"{CMD_DISPLAY} {CMD_DISPLAY_SCREENSAVER_OFF}"], check=True)
+        subprocess.run(
+            ["/bin/bash", "-c", f"{CMD_DISPLAY} {CMD_DISPLAY_POWER_MANAGEMENT_OFF}"], check=True)
+        subprocess.run(
+            ["/bin/bash", "-c", f"{CMD_DISPLAY} {CMD_DISPLAY_SCREENSAVER_BLANK_OFF}"], check=True)
 
     def off(self):
         """
-        Turns the display off
+        Turns the display off.
         """
 
-        subprocess.run(["/bin/bash", "-c", CMD_DISPLAY_OFF], check=True)
+        subprocess.run(
+            ["/bin/bash", "-c", f"{CMD_DISPLAY} {CMD_DISPLAY_FORCE_OFF}"], check=True)
+
+    def is_off(self):
+        """
+        Checks if the display is off.
+        """
+
+        result = subprocess.run(
+            ["/bin/bash", "-c", f"{CMD_DISPLAY} {CMD_DISPLAY_STATUS}"],
+            stdout=subprocess.PIPE, text=True, check=True)
+
+        for line in result.stdout.splitlines():
+            if line.strip() == "Monitor is Off":
+                return True
+
+        return False
 
 
     def get_url(self):
@@ -121,14 +148,17 @@ class Screen:
             "KIOSK_SCALE_FACTOR=",
             f'KIOSK_SCALE_FACTOR={scale}')
 
-    def get_orientation(self) -> str:
+    def get_orientation(self):
         """
-        Gets teh screen orientation an dimensions
+        Gets the screen orientation and dimensions or returns null if no screen was found.
         """
-        command = 'xrandr --display :0 --query --verbose | grep " connected"'
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        command = f'xrandr --display :0 --query --verbose | grep "{SCREEN} connected"'
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
 
         match = re.match(REGEX_XRANDR, result.stdout.strip())
+
+        if not match:
+            return {}
 
         return {
             "x" : match.group('x_resolution'),
@@ -142,8 +172,8 @@ class Screen:
         """
         self.__update_line(
             CONFIG_XINITRC,
-            "xrandr --output HDMI-1",
-            f"xrandr --output HDMI-1 --rotate {orientation}")
+            f"xrandr --output {SCREEN}",
+            f"xrandr --output {SCREEN} --rotate {orientation}")
 
     def reload(self):
         """

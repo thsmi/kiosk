@@ -5,7 +5,10 @@ Manages all configuration related data.
 import json
 import hashlib
 from pathlib import Path
+import subprocess
 import uuid
+
+DEFAULT_SENSOR_DELAY = 30
 
 class ConfigException(Exception):
     """
@@ -57,6 +60,57 @@ class Config():
 
         with open(filename, 'w+', encoding="utf-8") as file:
             json.dump(data, file, indent=4)
+
+    def get_config_value(self, filename:str, key:str, fallback):
+        """
+        Gets a specific value from a config file.
+        """
+
+        config = self.read_config(filename,{})
+
+        if not key in config:
+            return fallback
+
+        return config[key]
+
+    def set_config_value(self, filename:str, key:str, value):
+        """
+        Sets a specific value in the config file.
+        """
+        config = self.read_config(filename,{})
+        config[key] = value
+
+        self.write_config(filename, config)
+
+    def enable_motion_sensor(self):
+        """
+        Enables the motion sensor
+        """
+        self.set_config_value("motionsensor.json", "enabled", True)
+
+    def disable_motion_sensor(self):
+        """
+        Disables the motion sensor
+        """
+        self.set_config_value("motionsensor.json", "enabled", False)
+
+    def is_motion_sensor_enabled(self) -> bool:
+        """
+        Checks if the motion sensor is enabled.
+        """
+        return self.get_config_value("motionsensor.json", "enabled", False)
+
+    def get_motion_sensor_delay(self) -> float:
+        """
+        Gets the currently set motion sensor delay.
+        """
+        return self.get_config_value("motionsensor.json", "delay", DEFAULT_SENSOR_DELAY)
+
+    def set_motion_sensor_delay(self, delay:float):
+        """
+        Sets the currently set motion sensor delay.
+        """
+        self.set_config_value("motionsensor.json", "delay", delay)
 
     def hash_password(self, password:str) -> str:
         """
@@ -121,3 +175,19 @@ class Config():
             self.write_config("session.json", str(uuid.uuid4()))
 
         return self.read_config("session.json")
+
+    def get_log(self, service:str) -> str:
+        """
+        Gets the log message for th given service.
+        """
+        try:
+            return subprocess.run(
+                ['journalctl', '-u', service, "--lines=200", "--reverse", "--no-pager", "--output=cat","--all"],
+                capture_output=True, text=True, check=True).stdout
+
+        except subprocess.CalledProcessError as e:
+            print(f"Error occurred while reading journalctl log: {e.stderr}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        return "Failed to load log file"

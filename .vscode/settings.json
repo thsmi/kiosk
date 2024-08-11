@@ -1,7 +1,12 @@
 {
     "cSpell.words": [
+        "dpms",
+        "GPIO",
+        "gpiochip",
         "jsonify",
+        "windowmanager",
         "XINITRC",
-        "XRANDR"
+        "XRANDR",
+        "xset"
     ]
 }

@@ -43,6 +43,29 @@
         </div>
     </div>
 
+    <div class="modal fade" id="kiosk-log-modal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Logs</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="kiosk-log-spinner" class="text-center my-5">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading log files...</p>
+                    </div>
+                    <pre id="kiosk-log-content" class="d-none"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>    
+
 
 <!-- Modal -->
 <div class="modal fade" id="kiosk-schedule-dialog" tabindex="-1" aria-hidden="true">
@@ -209,14 +232,14 @@
                                     <div class="col-sm-6">
                                         <input type="text" readonly class="form-control-plaintext" id="kiosk-resolution" name="kiosk-resolution">
                                     </div>
-                                </div>                                
+                                </div>
 
                                 <div class="mb-3 row">
                                     <label for="kiosk-scale" class="col-sm-3 col-form-label form-label">Scale:</label>
                                     <div class="col-sm-2">
-                                        <input type="number" class="form-control" id="kiosk-scale" name="kiosk-scale">                                        
+                                        <input type="number" class="form-control" id="kiosk-scale" name="kiosk-scale">
                                     </div>
-                                    <label class="col-sm-3 col-form-label form-label">Percent</label>                              
+                                    <label class="col-sm-3 col-form-label form-label">Percent</label>
                                 </div>
 
                                 <div class="mb-3 row">
@@ -229,7 +252,7 @@
                                             <option value="left">270</option>
                                           </select>
                                     </div>
-                                    <label class="col-sm-3 col-form-label form-label">Degrees</label>                                                                      
+                                    <label class="col-sm-3 col-form-label form-label">Degrees</label>
                                 </div>
 
                                 <div class="text-end">
@@ -280,6 +303,31 @@
                                     <button type="button" id="kiosk-schedule-save" class="btn btn-primary">Save</button>
                                 </div>
 
+                                <hr>
+
+                                <!-- Motion sensor -->
+                                <h3>Motion Sensor</h3>
+                                <div class="mb-3 row">
+                                    <div class="col-sm-12">
+                                        <p>Configures the a sensor if present.</p>
+                                        <p>The sensor needs some time to warmup before it delivers reliable data..</p>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="kiosk-motionsensor-status">
+                                    <label class="form-check-label" for="kiosk-motionsensor-status">Enable/Disable Sensor</label>
+                                </div>
+
+                                <div class="mb-3 row ml-4">
+                                    <label for="kiosk-motionsensor-delay" class="col-sm-3 col-form-label form-label">Seconds to delay turn off</label>
+                                    <div class="col-sm-3">
+                                        <input type="text" class="form-control" id="kiosk-motionsensor-delay" name="kiosk-motionsensor-delay">
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-primary" id="kiosk-motionsensor-save">Save</button>
+                                </div>
                             </div>
 
                             <div class="tab-pane fade" id="kiosk-tab-pane-settings" role="tabpanel">
@@ -374,7 +422,18 @@
                                 <a href="https://github.com/thsmi/kiosk">https://github.com/thsmi/kiosk</a>
 
                                 <div>
-                                    Made available under the <a href="https://raw.githubusercontent.com/thsmi/kiosk/main/LICENSE">GNU AFFERO GENERAL PUBLIC LICENSE</a> 
+                                    <h3>License</h3>
+                                    Made available under the <a href="https://raw.githubusercontent.com/thsmi/kiosk/main/LICENSE">GNU AFFERO GENERAL PUBLIC LICENSE</a>
+
+                                    <hr/>                                
+                                    <h3>Logs</h3>
+                                    <p>Shows the log file containing debug information</p>
+    
+                                    <div class="text-end">
+                                        <button type="button" class="btn btn-primary" id="kiosk-log-browser">Show Browser Logs</button>
+                                        <button type="button" class="btn btn-primary" id="kiosk-log-webservice">Show Web Service Logs</button>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>

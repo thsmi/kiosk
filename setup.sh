@@ -6,15 +6,18 @@ if [ `id -u` -ne 0 ]
   exit
 fi
 
-echo Update System
+update_system() { 
+  echo Update System
 
-apt-get update -qq
-apt-get full-upgrade -yy -qq
-apt-get autoremove -yy -qq
+  apt-get update -qq
+  apt-get full-upgrade -yy -qq
+  apt-get autoremove -yy -qq
 
-apt-get install unattended-upgrades -yy -qq
-apt-get install fail2ban -yy -qq
+  apt-get install unattended-upgrades -yy -qq
+  apt-get install fail2ban -yy -qq
+}
 
+update_system
 
 echo Installing Window Manager
 
@@ -40,6 +43,7 @@ unclutter &
 
 exec /usr/bin/matchbox-window-manager -use_titlebar no -- :0
 EOF
+
 
 cat > /etc/systemd/system/kiosk-windowmanager.service << EOF
 [Unit]

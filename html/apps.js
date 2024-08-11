@@ -271,8 +271,16 @@ async function loadScreen() {
 
     const screen = await getJson("/screen");
 
-    document.getElementById("kiosk-orientation").value = screen.dimensions.orientation;
-    document.getElementById("kiosk-resolution").value = `${screen.dimensions.x}x${screen.dimensions.y}`
+    if ((screen.dimensions.x) ||  (screen.dimensions.y))
+        document.getElementById("kiosk-resolution").value = `${screen.dimensions.x}x${screen.dimensions.y}`
+    else 
+        document.getElementById("kiosk-resolution").value = "No Screen connected to HDMI-1"
+
+    if (screen.dimensions.orientation !== undefined)
+        document.getElementById("kiosk-orientation").value = screen.dimensions.orientation;
+    else
+        document.getElementById("kiosk-orientation").value = "normal";
+
     document.getElementById("kiosk-website").value = screen.url;
     document.getElementById("kiosk-scale").value = (screen.scale * 100);
 }
@@ -570,6 +578,20 @@ async function saveSchedule() {
         throw new Error("Failed to update schedule.");
 }
 
+async function showLog(service) {
+    (new bootstrap.Modal(document.getElementById('kiosk-log-modal'))).show();
+
+    document.getElementById("kiosk-log-spinner").classList.remove("d-none");
+    document.getElementById("kiosk-log-content").classList.add("d-none");
+
+    // TODO show spinner unless log is loaded and ensure user it authenticated no 401 is returned
+    const log = await fetch(`log/${service}`);
+    document.getElementById('kiosk-log-content').innerText = await log.text();
+
+    document.getElementById("kiosk-log-content").classList.remove("d-none");
+    document.getElementById("kiosk-log-spinner").classList.add("d-none");
+}
+
 async function awaitReboot() {
 
     const modal = new bootstrap.Modal('#kiosk-rebooting-modal');
@@ -612,11 +634,35 @@ async function loadSystem() {
         = (await getJson("hostname")).hostname;
 }
 
+/**
+ * Saves the motion sensors settings.
+ */
+async function saveMotionSensor() {
+    const delay = document.getElementById("kiosk-motionsensor-delay").value;
+    await postJson("motionsensor/delay", { "delay" : delay});
+
+    if (document.getElementById("kiosk-motionsensor-status").checked)
+        await postJson("motionsensor/enable", {});
+    else 
+        await postJson("motionsensor/disable", {});
+}
+
+/**
+ * Loads the motions sensors settings.
+ */
+async function loadMotionSensor() {
+    data = await getJson("motionsensor")
+
+    document.getElementById("kiosk-motionsensor-status").checked = data.enabled;
+    document.getElementById("kiosk-motionsensor-delay").value = data.delay;
+}
+
 async function populate() {
     loadScreenshot();
     loadScreen();
     loadSchedule();
     loadSystem();
+    loadMotionSensor();
 
     addProgressEventHandler("kiosk-screen-save", async() => {
         await saveScreen();
@@ -679,6 +725,18 @@ async function populate() {
         await postJson("hostname", { hostname: value});
 
         await awaitReboot();
+    });
+
+    addProgressEventHandler("kiosk-log-browser", async() => {
+        await showLog("browser");
+    });
+
+    addProgressEventHandler("kiosk-log-webservice", async() => {
+        await showLog("webservice");
+    });
+
+    addProgressEventHandler("kiosk-motionsensor-save", async() => {
+        await saveMotionSensor();
     });
 }
 
