@@ -34,7 +34,8 @@ class System:
         """
         Checks if ssh is active
         """
-        return subprocess.run(["systemctl", "is-active", "--quiet", "ssh"], check=False).returncode == 0
+        rv = subprocess.run(["systemctl", "is-active", "--quiet", "ssh"], check=False)
+        return rv.returncode == 0
 
     def reboot(self):
         """
@@ -56,7 +57,7 @@ class System:
 
         # Update /etc/hostname
         with ETC_HOSTNAME.open('w', encoding="utf-8") as file:
-            file.write(hostname + '\n')
+            file.write(f'{hostname}\n')
 
         # Update /etc/hosts
         with ETC_HOSTS.open('r', encoding="utf-8") as file:

@@ -10,7 +10,7 @@ from src.cert import Cert
 from src.motionsensor import MotionSensor
 from src.screen import Screen
 from src.config import Config
-from src.cron import CronFile
+from src.cron import CronFile, CronFileRebootItem, CronFileDisplayOnItem, CronFileDisplayOffItem
 from src.system import System
 
 PUBLIC_FUNCTION =  ['on_get_index','on_login','on_is_authenticated','on_logout', 'on_get_resource']
@@ -34,6 +34,11 @@ class App:
 
         if self.__config.is_motion_sensor_enabled():
             self.__motion_sensor.enable()
+
+        self.__cron = CronFile()
+        self.__cron.add_cron_item(CronFileRebootItem())
+        self.__cron.add_cron_item(CronFileDisplayOnItem())
+        self.__cron.add_cron_item(CronFileDisplayOffItem())
 
 
     # Screen related function.
@@ -91,7 +96,7 @@ class App:
     # Certificate Endpoint related functions
     def on_set_cert(self):
         """
-        Sets a cert provided by the user
+        Sets a cert provided by the user.
         """
         self.__cert.update_pfx(
             request.files['pfx'].read(),
@@ -121,14 +126,14 @@ class App:
         Returns the schedule and the corresponding cron jobs.
         """
 
-        return jsonify(CronFile().load_jobs())
+        return jsonify(self.__cron.load_jobs())
 
     def on_set_schedule(self):
         """
         Sets the schedule and the corresponding cron jobs.
         """
 
-        CronFile().save_jobs(request.json)
+        self.__cron.save_jobs(request.json)
         return self.on_get_schedule()
 
     def on_get_motion_sensor(self):

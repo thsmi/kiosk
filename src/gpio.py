@@ -3,12 +3,16 @@ To figure out the line use gpioinfo on the command line.
 and to test a pin use gpiomon gpiochip0 18
 """
 
+from abc import ABC
 import array
 import ctypes
-from enum import Enum
 import os
 import fcntl
 import struct
+
+GPIO_ATTRIBUTE_FLAG = 1
+GPIO_ATTRIBUTE_VALUE = 2
+GPIO_ATTRIBUTE_DEBOUNCE = 3
 
 GPIO_V2_LINE_FLAG_USED = 1 << 0
 GPIO_V2_LINE_FLAG_ACTIVE_LOW = 1 << 1
@@ -25,19 +29,30 @@ GPIO_V2_LINE_FLAG_BIAS_DISABLED = 1 << 10
 GPIO_V2_LINES_MAX = 64
 GPIO_MAX_NAME_SIZE = 32
 
+GPIO_FLAG_ATTRIBUTE_SIZE = 16
+GPIO_VALUE_ATTRIBUTE_SIZE = 16
+GPIO_DEBOUNCE_ATTRIBUTE_SIZE = 16
+GPIO_V2_LINE_CONFIG_ATTRIBUTE_SIZE = 24
+GPIO_V2_LINE_CONFIG_ATTRIBUTES_SIZE = 240
+GPIO_V2_LINE_CONFIG_SIZE = 272
+
+
 GPIO_V2_LINE_NUM_ATTRS_MAX = 8
 
 class GpioException(Exception):
     """
-    Thrown in case something goes wrong with gpios.
+    Thrown in case something goes wrong with gpio.
     """
 
-class GpioV2Attribute:
+class GpioV2Attribute(ABC):
+    """
+    An abstract gpioV2 struct abstraction.
+    """
 
     def __init__(self, identifier):
         self.__id = identifier
 
-    def pack(self):
+    def pack(self) -> bytes:
         """
         Packs the gpio attributes struct.
         """
@@ -48,49 +63,56 @@ class GpioV2Attribute:
         return data
 
 class GpioV2FlagAttribute(GpioV2Attribute):
+    """
+    Configures gpio flags.
+    """
 
     def __init__(self, flags):
-        super().__init__(1)
+        super().__init__(GPIO_ATTRIBUTE_FLAG)
         self.__flags = flags
 
-    def pack(self):
+    def pack(self) -> bytes:
         """
         Packs the flags attribute struct.
         """
         data = super().pack()
         data += struct.pack("<Q", self.__flags)
 
-        if len(data) != 16:
+        if len(data) != GPIO_FLAG_ATTRIBUTE_SIZE:
             raise GpioException(f"Expected 16 bytes but got {len(data)}")
 
         return data
 
 class GpioV2ValueAttribute(GpioV2Attribute):
+    """
+    Specifies the Gpio values to set.
+    """
     def __init__(self, values):
-        super().__init__(2)
+        super().__init__(GPIO_ATTRIBUTE_VALUE)
         self.__values = values
 
-    def pack(self):
+    def pack(self) -> bytes:
         """
         Packs the value attribute struct.
         """
         data = super().pack()
         data += struct.pack("<Q", self.__values)
 
-        if len(data) != 16:
+        if len(data) != GPIO_VALUE_ATTRIBUTE_SIZE:
             raise GpioException(f"Expected 16 bytes but got {len(data)}")
 
         return data
 
-
 class GpioV2DebounceAttribute(GpioV2Attribute):
+    """
+    Configures the debounce logic.
+    """
 
     def __init__(self, period):
-        super().__init__(3)
+        super().__init__(GPIO_ATTRIBUTE_DEBOUNCE)
         self.__period = period
 
-
-    def pack(self):
+    def pack(self) -> bytes:
         """
         Packs the debounce attribute struct.
         """
@@ -98,7 +120,7 @@ class GpioV2DebounceAttribute(GpioV2Attribute):
         data += struct.pack("<I", self.__period)
         data += struct.pack("<I", 0)
 
-        if len(data) != 16:
+        if len(data) != GPIO_DEBOUNCE_ATTRIBUTE_SIZE:
             raise GpioException(f"Expected 16 bytes but got {len(data)}")
 
         return data
@@ -110,7 +132,7 @@ class GpioV2LineConfigAttribute():
         self.__mask = mask
         self.__attribute = attribute
 
-    def pack(self):
+    def pack(self) -> bytes:
         """
         Packs the config attribute struct.
         """
@@ -118,7 +140,7 @@ class GpioV2LineConfigAttribute():
         data += self.__attribute.pack()
         data += struct.pack("<Q", self.__mask)
 
-        if len(data) != 24:
+        if len(data) != GPIO_V2_LINE_CONFIG_ATTRIBUTE_SIZE:
             raise GpioException(f"Expected 24 bytes but got {len(data)}")
 
         return data
@@ -131,9 +153,12 @@ class GpioV2LineConfig():
         self.__attributes = []
 
     def set_flag(self, flag):
+        """
+        Sets an gpio flag.
+        """
         self.__flags |= flag
 
-    def add_attribute(self, attribute):
+    def add_attribute(self, attribute: GpioV2Attribute):
         self.__attributes.append(attribute)
 
     def add_debounce(self, mask, period):
@@ -153,6 +178,13 @@ class GpioV2LineConfig():
         """
         self.set_flag(GPIO_V2_LINE_FLAG_BIAS_PULL_UP)
 
+    def enable_pull_down(self):
+        """
+        Enables the internal pull down
+        """
+        self.set_flag(GPIO_V2_LINE_FLAG_BIAS_PULL_DOWN)
+
+
     def enable_rising_edge(self):
         """
         Triggers on rising edges
@@ -165,24 +197,24 @@ class GpioV2LineConfig():
         """
         self.set_flag(GPIO_V2_LINE_FLAG_EDGE_FALLING)
 
-    def pack_attributes(self):
+    def pack_attributes(self) -> bytes:
         """
-        Packs the attributes into a binary struct.
+        Packs the attributes into a binary struct. It is zero padded.
         """
         data = bytes()
 
         for attribute in self.__attributes:
             data += attribute.pack()
 
-        while len(data) != 240:
+        while len(data) != GPIO_V2_LINE_CONFIG_ATTRIBUTES_SIZE:
             data += b"\0"
 
-        if len(data) != 240:
+        if len(data) != GPIO_V2_LINE_CONFIG_ATTRIBUTES_SIZE:
             raise GpioException(f"Expected 240 bytes but got {len(data)}")
 
         return data
 
-    def pack(self):
+    def pack(self) -> bytes:
         """
         Packs the line config into a binary struct.
         """
@@ -192,7 +224,7 @@ class GpioV2LineConfig():
         data += bytearray([0] * 5 * 4)
         data += self.pack_attributes()
 
-        if len(data) != 272:
+        if len(data) != GPIO_V2_LINE_CONFIG_SIZE:
             raise GpioException(f"Expected 272 bytes but got {len(data)}")
 
         return data
@@ -202,7 +234,7 @@ class GpioV2LineRequest():
 
     def __init__(self):
         self.__lines = []
-        self.__consumer = ""
+        self.__consumer:str = ""
         self.__config = None
         self.__fd: int = 0
         self.__event_buffer_size = 0
@@ -213,7 +245,10 @@ class GpioV2LineRequest():
         """
         self.__lines.append(line)
 
-    def set_consumer(self, consumer):
+    def set_consumer(self, consumer:str):
+        """
+        Sets the consumer name.
+        """
         self.__consumer = consumer
 
     def set_config(self, config):
@@ -221,7 +256,7 @@ class GpioV2LineRequest():
 
     def get_fd(self) -> int:
         """
-        Returns the file descriptor
+        Returns the file descriptor.
         """
         return self.__fd
 
@@ -244,7 +279,7 @@ class GpioV2LineRequest():
 
     def pack_consumer(self) -> bytes:
         """
-        Packs the consumer config struct used by the line request.
+        Packs the consumer name into a struct used by the line request.
         """
 
         data = bytes()
@@ -288,6 +323,9 @@ class GpioV2LineRequest():
         return data
 
     def unpack(self, data):
+        """
+        Unpacks the response the the line request, which is typically a file handle.
+        """
         if len(data) != 592:
             raise GpioException(f"Expected 592 bytes but got {len(data)}")
 
@@ -381,18 +419,23 @@ class GpioDevice:
         return GpioLine(req.get_fd(), lines)
 
 class GpioLine():
+    """
+    Abstracts a gpio line configuration.
+    """
     def __init__(self, fd, lines):
         self.__fd = fd
         self.__lines = lines
 
     def get_fd(self):
+        """
+        Returns the file descriptor needed to read this gpio line.
+        """
         return self.__fd
 
     def get_active(self):
         """
         Checks if the gpio line is active.
         """
-
         lv = GpioV2LineValues()
 
         mask = 0
@@ -418,88 +461,3 @@ class GpioLine():
                 res[self.__lines[line]] = False
 
         return res
-
-class GpioMonitorState(Enum):
-    """
-    Small state machine to track the gpio monitors states.
-    """
-    IDLE = 1
-    RUNNING = 2
-    STOPPING = 3
-
-
-class GpioMonitor():
-    """
-    Implements a gpio pin monitoring logic.
-    """
-
-    def __init__(self, device, lines):
-        """
-        Initializes the gpio monitor.
-        The device on a raspberry pi is typically "/dev/gpiochip0"
-        The lines are the lines to monitor.
-        """
-        self.__device = device
-        self.__lines = lines
-
-        self.__trigger = None
-        self.__state = GpioMonitorState.IDLE
-
-    def set_trigger(self, listener):
-        """
-        Defines which function should be called in case an IO channel changes.
-        """
-        self.__trigger = listener
-
-    def is_enabled(self) -> bool:
-        """
-        Gets the current gpio monitor status.
-        """
-        return self.__state != GpioMonitorState.IDLE
-
-    def disable(self):
-        """
-        Stops monitoring the io port.
-        """
-        if self.__state == GpioMonitorState.IDLE:
-            return
-
-        self.__state = GpioMonitorState.STOPPING
-
-    def enable(self):
-        """
-        Starts monitoring the gpio ports.        
-        """
-
-        if self.__state != GpioMonitorState.IDLE:
-            raise GpioException("Gpio monitor already running or stopping.")
-
-        with GpioDevice(self.__device) as dev:
-
-            self.__state = GpioMonitorState.RUNNING
-
-            config = GpioV2LineConfig()
-            config.enable_input()
-            #config.enable_pull_up()
-            config.enable_rising_edge()
-            config.enable_falling_edge()
-
-            mask = 0
-            for i in range(len(self.__lines)):
-                mask |= (1 << i)
-
-            config.add_debounce(mask, 100)
-
-            l = dev.get_lines("test", self.__lines, config)
-
-            while self.__state is GpioMonitorState.RUNNING:
-                data = os.read(l.get_fd(), 48)
-                active = l.get_active()
-
-                if self.__trigger:
-                    self.__trigger(active)
-
-                # len active -> number of events which triggered
-                # active.keys() -> name of the lanes which are active.
-
-        self.__state = GpioMonitorState.IDLE

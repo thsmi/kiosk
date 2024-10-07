@@ -1,10 +1,20 @@
 """
 Implements a logic for a motion sensor.
 """
+from enum import Enum
 import logging
+import os
 import threading
-from src.gpio import GpioMonitor
+from src.gpio import GpioDevice, GpioV2LineConfig
 from src.screen import Screen
+
+class MotionSensorState(Enum):
+    """
+    Small state machine to track the gpio monitors states.
+    """
+    IDLE = 1
+    RUNNING = 2
+    STOPPING = 3
 
 class MotionSensor:
     """
@@ -12,7 +22,9 @@ class MotionSensor:
     """
 
     def __init__(self, screen: Screen, delay:int):
-        self.__gpio_monitor = GpioMonitor("/dev/gpiochip0", [18])
+        self.__device = "/dev/gpiochip0"
+        self.__line = 18
+        self.__state = MotionSensorState.IDLE
 
         self.__screen = screen
         self.__timer = None
@@ -53,24 +65,57 @@ class MotionSensor:
         """
         Checks if the motion sensor is enabled.
         """
-        return self.__gpio_monitor.is_enabled()
+        return self.__state != MotionSensorState.IDLE
 
     def run(self):
         """
         Used by the thread to run the blocking call to the gpio monitor.
         """
-        self.__gpio_monitor.enable()
+        if self.__state is not MotionSensorState.IDLE:
+            self.__state = MotionSensorState.RUNNING
+            return
+
+        self.__state = MotionSensorState.RUNNING
+
+        try:
+            with GpioDevice(self.__device) as dev:
+                config = GpioV2LineConfig()
+                config.enable_input()
+                config.enable_pull_down()
+                config.enable_rising_edge()
+                config.enable_falling_edge()
+
+                lines = dev.get_lines("kiosk", [self.__line], config)
+
+                while self.__state is MotionSensorState.RUNNING:
+                    os.read(lines.get_fd(), 48)
+                    active = lines.get_active()
+
+                    if active[self.__line] is True:
+                        self.turn_on()
+                        continue
+
+                    # The sensor goes low for three seconds between
+                    # consultive samples. Means any off signal need to be low
+                    # for way more than three seconds.
+                    # Otherwise we'll resonate between the on and off state.
+                    self._start_timeout(self.__delay, self.turn_off)
+        finally:
+            self.__state = MotionSensorState.IDLE
 
     def enable(self):
         """
         Starts monitoring the motion sensor.
         """
 
-        # Already running
-        if self.__worker:
+        if self.__state is MotionSensorState.RUNNING:
             return
 
-        self.__gpio_monitor.set_trigger(self.on_trigger)
+        # In case it is stopping the just cancel the stop request.
+        if self.__state is MotionSensorState.STOPPING:
+            self.__state = MotionSensorState.RUNNING
+            return
+
         self.__worker = threading.Thread(target=self.run)
         self.__worker.start()
 
@@ -80,10 +125,7 @@ class MotionSensor:
         """
 
         self._cancel_timeout()
-
-        if self.__worker:
-            self.__gpio_monitor.disable()
-            self.__worker = None
+        self.__state = MotionSensorState.STOPPING
 
     def turn_on(self):
         """
@@ -104,24 +146,3 @@ class MotionSensor:
 
         self._cancel_timeout()
         self.__screen.off()
-
-    def on_trigger(self, active):
-        """
-        When the sensor falls to low it has a three second time span where it 
-        needs to regenerate and won't measure anything
-        """
-
-        logging.getLogger('flask.app').error(str(active))
-
-        if 18 not in active:
-            return
-
-        if active[18] is True:
-            self.turn_on()
-            return
-
-        # The sensor goes low for three seconds between
-        # consultive samples. Means any off signal need to be low
-        # for way more than three seconds.
-        # Otherwise we'll resonate between the on and off state.
-        self._start_timeout(self.__delay, self.turn_off)

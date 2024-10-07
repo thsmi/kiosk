@@ -1,5 +1,6 @@
 """
-Controls what is displayed on the screen, in explicit the the X11 session as well as the browser.
+Controls what is displayed on the screen,
+in explicit the the X11 session as well as the browser.
 """
 import subprocess
 import pathlib
@@ -7,9 +8,16 @@ import re
 
 CONFIG_BROWSER = pathlib.Path("/etc/kiosk/browser.conf")
 CONFIG_XINITRC = pathlib.Path("/etc/kiosk/xinitrc")
+CONFIG_WM_SERVICE_FILE = "kiosk-windowmanager.service"
 
-SCREEN = "HDMI-1"
+SCREEN_1 = "HDMI-1"
+SCREEN_2 = "HDMI-2"
+
+CMD_SCREEN_1_ON = f"xrandr --output {SCREEN_1}"
+CMD_SCREEN_2_OFF = f"xrandr --output {SCREEN_2} --off"
 REGEX_XRANDR =  r"^HDMI-1 connected primary (?P<x_resolution>\d+)x(?P<y_resolution>\d+)\S+ \S+ (?P<orientation>\S+)"
+
+CMD_SCREEN_QUERY = "xrandr --display :0 --query --verbose"
 
 CMD_DISPLAY = "DISPLAY=:0"
 CMD_DISPLAY_STATUS = "xset -q"
@@ -18,7 +26,6 @@ CMD_DISPLAY_FORCE_OFF = "xset dpms force off"
 CMD_DISPLAY_SCREENSAVER_OFF = "xset s off"
 CMD_DISPLAY_SCREENSAVER_BLANK_OFF = "xset s noblank"
 CMD_DISPLAY_POWER_MANAGEMENT_OFF = "xset -dpms"
-
 
 class Screen:
     """
@@ -56,7 +63,7 @@ class Screen:
 
                 file.write(line)
 
-    def get_screenshot(self, scale: int = None,  picture_format: str = None) -> bytes:
+    def get_screenshot(self, scale: int = None, picture_format: str = None) -> bytes:
         """
         Takes a screenshot from the current screen and returns it as png.
         """
@@ -117,8 +124,7 @@ class Screen:
 
         return False
 
-
-    def get_url(self):
+    def get_url(self) -> str:
         """
         Gets the currently set homepage.
         """
@@ -141,7 +147,7 @@ class Screen:
 
     def set_scale_factor(self, scale :str):
         """
-        Sets the scale factor for high density displays
+        Sets the scale factor for high density displays.
         """
         self.__update_line(
             CONFIG_BROWSER,
@@ -152,7 +158,7 @@ class Screen:
         """
         Gets the screen orientation and dimensions or returns null if no screen was found.
         """
-        command = f'xrandr --display :0 --query --verbose | grep "{SCREEN} connected"'
+        command = f'{CMD_SCREEN_QUERY} | grep "{SCREEN_1} connected"'
         result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
 
         match = re.match(REGEX_XRANDR, result.stdout.strip())
@@ -172,12 +178,12 @@ class Screen:
         """
         self.__update_line(
             CONFIG_XINITRC,
-            f"xrandr --output {SCREEN}",
-            f"xrandr --output {SCREEN} --rotate {orientation}")
+            CMD_SCREEN_1_ON,
+            CMD_SCREEN_1_ON + f" --rotate {orientation}")
 
     def reload(self):
         """
         Restarts the window manager.
         """
-        subprocess.run("systemctl restart kiosk-windowmanager.service", shell=True, check=True)
+        subprocess.run(f"systemctl restart {CONFIG_WM_SERVICE_FILE}", shell=True, check=True)
         #subprocess.run("systemctl restart kiosk-browser.service", shell=True, check=True)
