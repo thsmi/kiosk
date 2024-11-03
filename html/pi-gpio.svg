@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="143.19mm" height="21.494mm" version="1.1" viewBox="0 0 143.19 21.494" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(-31.533 -29.735)">
+  <path transform="translate(6.8771 3.4595)" x="24.932772" y="26.552176" width="142.63698" height="20.94038" d="m33.959 26.552h133.61v20.94h-142.64v-11.914a9.0265 9.0265 135 0 1 9.0265-9.0265z" fill="#e6e6e6" stroke="#1a1a1a" stroke-width=".554"/>
+  <path transform="translate(6.8771 3.4595)" x="44.738659" y="29.107744" width="116.76238" height="14.912889" d="m45.797 29.108h114.65l1.0583 1.0583v12.796l-1.0583 1.0583h-114.65l-1.0583-1.0583v-12.796z" fill="#58595b"/>
+  <circle cx="54.289" cy="36.133" r="2" fill="#f00"/>
+  <g fill="#999">
+   <circle cx="164.26" cy="36.133" r="2"/>
+   <circle cx="164.38" cy="44.067" r="2"/>
+   <circle cx="54.351" cy="44.067" r="2"/>
+   <circle cx="60.077" cy="36.133" r="2"/>
+  </g>
+  <circle cx="65.865" cy="36.133" r="2" fill="#1a1a1a"/>
+  <circle cx="71.653" cy="36.133" r="2" fill="#999"/>
+  <circle cx="77.44" cy="36.133" r="2" fill="#999"/>
+  <circle cx="83.228" cy="36.133" r="2" fill="#00f"/>
+  <g fill="#999">
+   <circle cx="89.016" cy="36.133" r="2"/>
+   <circle cx="94.804" cy="36.133" r="2"/>
+   <circle cx="100.59" cy="36.133" r="2"/>
+   <circle cx="106.38" cy="36.133" r="2"/>
+   <circle cx="112.17" cy="36.133" r="2"/>
+   <circle cx="117.96" cy="36.133" r="2"/>
+   <circle cx="123.74" cy="36.133" r="2"/>
+   <circle cx="129.53" cy="36.133" r="2"/>
+   <circle cx="135.32" cy="36.133" r="2"/>
+   <circle cx="141.11" cy="36.133" r="2"/>
+   <circle cx="146.89" cy="36.133" r="2"/>
+   <circle cx="152.68" cy="36.133" r="2"/>
+   <circle cx="158.47" cy="36.133" r="2"/>
+   <circle cx="60.142" cy="44.067" r="2"/>
+   <circle cx="65.933" cy="44.067" r="2"/>
+   <circle cx="71.724" cy="44.067" r="2"/>
+   <circle cx="77.515" cy="44.067" r="2"/>
+   <circle cx="83.306" cy="44.067" r="2"/>
+   <circle cx="89.097" cy="44.067" r="2"/>
+   <circle cx="94.888" cy="44.067" r="2"/>
+   <circle cx="100.68" cy="44.067" r="2"/>
+   <circle cx="106.47" cy="44.067" r="2"/>
+   <circle cx="112.26" cy="44.067" r="2"/>
+   <circle cx="118.05" cy="44.067" r="2"/>
+   <circle cx="123.84" cy="44.067" r="2"/>
+   <circle cx="129.63" cy="44.067" r="2"/>
+   <circle cx="135.43" cy="44.067" r="2"/>
+   <circle cx="141.22" cy="44.067" r="2"/>
+   <circle cx="147.01" cy="44.067" r="2"/>
+   <circle cx="152.8" cy="44.067" r="2"/>
+   <circle cx="158.59" cy="44.067" r="2"/>
+  </g>
+  <ellipse cx="42.309" cy="39.996" rx="8.0364" ry="8.0364" fill="#ccc"/>
+  <ellipse cx="42.309" cy="39.996" rx="4.0596" ry="4.0595" fill="#f9f9f9"/>
+ </g>
+</svg>
