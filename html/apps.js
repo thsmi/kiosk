@@ -182,11 +182,15 @@ async function getJson(url) {
     return await (await fetch(url)).json();
 }
 
-async function postJson(url, data) {
+async function postJson(url, data, method) {
+
+    if ((typeof(method) === "undefined") || (method === null))
+        method = "POST"
+
     data = JSON.stringify(data);
 
     const response = await fetch(url, {
-        method: "POST",
+        method: method,
         headers: {
             'Content-Type': 'application/json'
         },
@@ -260,29 +264,81 @@ async function loadScreenshot(ms) {
     const random = Math.random().toString(36).substring(2, 15); 
 
     const img = document.getElementById("kiosk-screenshot");
-    img.src = `./screen/screenshot.png?${timestamp}-${random}`; 
+    img.src = `./display/screenshot.png?${timestamp}-${random}`; 
 
     img.addEventListener("load", () => {
         document.getElementById("kiosk-screenshot-loading").classList.add("d-none");
     }, { once: true });
 }
 
-async function loadScreen() {
+async function loadBrowser() {
+    const browser = await getJson("/browser");
 
-    const screen = await getJson("/screen");
+    document.getElementById("kiosk-browser-url").value = browser.url;
+    document.getElementById("kiosk-browser-scale").value = (browser.scale * 100);
+}
 
-    if ((screen.dimensions.x) ||  (screen.dimensions.y))
-        document.getElementById("kiosk-resolution").value = `${screen.dimensions.x}x${screen.dimensions.y}`
-    else 
-        document.getElementById("kiosk-resolution").value = "No Screen connected to HDMI-1"
+async function saveBrowser() {
+    // Schedule a screenshot in 10 sec, chrome starts very slow...
+    loadScreenshot(SEVEN_SECONDS);   
 
-    if (screen.dimensions.orientation !== undefined)
-        document.getElementById("kiosk-orientation").value = screen.dimensions.orientation;
+    const data = {
+        url : document.getElementById("kiosk-browser-url").value,
+        scale : parseFloat(document.getElementById("kiosk-browser-scale").value) / 100
+    };
+
+    const response = await postJson("/browser", data);
+
+    if (!response.ok)
+        throw new Error(`An error occurred while updating browser settings.`);
+
+    await loadBrowser();    
+}
+
+async function loadScreen(name, screen) {
+    if ((typeof(screen) === "undefined") || (screen == null))
+        screen = await getJson("/display/screens/"+name);
+
+    if (screen.enabled)
+        document.getElementById(`kiosk-screen-output`).value = "Enabled";
     else
-        document.getElementById("kiosk-orientation").value = "normal";
+        document.getElementById(`kiosk-screen-output`).value = "Disabled";
 
-    document.getElementById("kiosk-website").value = screen.url;
-    document.getElementById("kiosk-scale").value = (screen.scale * 100);
+    if (screen.connected)
+        if ((screen.resolution.x !== 0) && (screen.resolution.y !== 0))
+            document.getElementById("kiosk-screen-monitor").value
+                = `Connected running @${screen.resolution.x} x ${screen.resolution.y} px.`;
+        else
+            document.getElementById("kiosk-screen-monitor").value
+                = "Connected. No resolution negotiated.";
+    else
+        document.getElementById("kiosk-screen-monitor").value = "No monitor connected.";
+
+    document.getElementById("kiosk-screen-orientation").value = screen.orientation;
+}
+
+async function loadScreens() {
+
+    const screens = await getJson("/display/screens");
+
+    const primary = document.getElementById("kiosk-screen-primary")
+    while (primary.firstChild)
+        primary.firstChild.remove();
+
+    for (let screen of screens) {
+
+        const option = document.createElement("option");
+        option.value = screen.name;
+        option.textContent = screen.name;
+
+        primary.appendChild(option);
+
+        if (!screen.primary)
+            continue
+
+        option.selected = true;
+        await loadScreen(screen.name, screen);
+    }
 }
 
 async function saveScreen() {
@@ -290,18 +346,18 @@ async function saveScreen() {
     // Schedule a screenshot in 10 sec, chrome starts very slow...
     loadScreenshot(SEVEN_SECONDS);   
 
+    const primary = document.getElementById("kiosk-screen-primary").value;
+
     const data = {
-        url : document.getElementById("kiosk-website").value,
-        orientation : document.getElementById("kiosk-orientation").value,
-        scale : parseFloat(document.getElementById("kiosk-scale").value) / 100
+        orientation : document.getElementById("kiosk-screen-orientation").value,
     };
 
-    const response = await postJson("/screen", data);
+    const response = await postJson("/display/screens/"+primary, data);
 
     if (!response.ok)
         throw new Error(`An error occurred while updating screen.`);
 
-    await loadScreen();
+    await loadScreen(primary, await response.json());
 }
 
 async function authenticate() {
@@ -634,6 +690,61 @@ async function loadSystem() {
         = (await getJson("hostname")).hostname;
 }
 
+async function loadNetwork() {
+
+    const primary = document.getElementById("kiosk-connections");
+    while (primary.firstChild)
+        primary.firstChild.remove();
+
+    data = await getJson("connections")
+
+    for (item of data) {
+
+        const elm = document.getElementById("kiosk-connections-template").content.cloneNode(true);
+        
+        elm.querySelector(".kiosk-connection-ip4-address").textContent = item.ipv4.addresses.join(",");
+        elm.querySelector(".kiosk-connection-ip6-address").textContent = item.ipv6.addresses.join(",");
+
+        if (item.type == "Wifi")
+            elm.querySelector(".kiosk-connection-title").textContent = `Wifi - SSID ${item.ssid}`;
+        else
+            elm.querySelector(".kiosk-connection-title").textContent = "Ethernet";
+            
+        const id = "kiosk-"
+            + Math.random().toString(36).substring(2, 8).toUpperCase()
+            + Date.now().toString(16).toUpperCase();
+
+        elm.firstElementChild.id = id;
+
+        document.getElementById("kiosk-connections").appendChild(elm);
+
+        if (item.type == "Wifi") {
+            document.querySelector(`#${id} .kiosk-connection-forget`).addEventListener("click", () => {
+                forgetWifi(item.ssid)
+            });
+        } else
+            document.querySelector(`#${id} .kiosk-connection-forget`).classList.add("d-none");
+    }
+}
+
+async function addWifi() {
+    
+    await postJson("connections", {
+        "ssid" : document.getElementById("kiosk-wifi-ssid").value,
+        "psk" : document.getElementById("kiosk-wifi-psk").value
+    });
+
+    await loadNetwork();
+}
+
+async function forgetWifi(ssid) {
+    await postJson("connections", {
+        "ssid" : ssid,
+    }, "DELETE");
+
+    await loadNetwork();
+}
+
 /**
  * Saves the motion sensors settings.
  */
@@ -661,22 +772,36 @@ async function loadMotionSensor() {
 
 async function populate() {
     loadScreenshot();
-    loadScreen();
+    loadBrowser();
+    loadScreens();
     loadSchedule();
     loadSystem();
+    loadNetwork();
     loadMotionSensor();
 
-    addProgressEventHandler("kiosk-screen-save", async() => {
-        await saveScreen();
+    addProgressEventHandler("kiosk-wifi-add", async() => {
+        await addWifi();
     });
 
+    addProgressEventHandler('kiosk-browser-save', async() => {
+        await saveBrowser();
+    });
+
+    addProgressEventHandler("kiosk-screen-save", async() => {
+        await saveScreen();        
+    });
+
+    document.getElementById("kiosk-screen-primary").addEventListener("change", () => {
+        loadScreen(document.getElementById("kiosk-screen-primary").value)
+    })
+
     addProgressEventHandler('kiosk-screen-on', async() => {
-        await fetch("/screen/on");
+        await fetch("/display/on");
         await loadScreenshot();
     });
 
     addProgressEventHandler('kiosk-screen-off', async() => {
-        await fetch("/screen/off");
+        await fetch("/display/off");
         await loadScreenshot();
     });        
 

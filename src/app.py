@@ -3,14 +3,16 @@ Tha main application logic
 """
 from pathlib import Path
 import mimetypes
+import time
 
 from flask import Flask, request, jsonify, session, redirect, send_file, Response
 
 from src.cert import Cert
+from src.display import Browser, Display
 from src.motionsensor import MotionSensor
-from src.screen import Screen
 from src.config import Config
 from src.cron import CronFile, CronFileRebootItem, CronFileDisplayOnItem, CronFileDisplayOffItem
+from src.network import Network
 from src.system import System
 
 PUBLIC_FUNCTION =  ['on_get_index','on_login','on_is_authenticated','on_logout', 'on_get_resource']
@@ -25,12 +27,14 @@ class App:
         Creates a new instance.
         """
         self.__config = config
-        self.__screen = Screen()
+        self.__display = Display()
+        self.__browser = Browser()
         self.__cert = Cert(root=config.get_root())
         self.__system = System()
+        self.__network = Network()
 
         self.__motion_sensor = MotionSensor(
-            self.__screen, self.__config.get_motion_sensor_delay())
+            self.__display, self.__config.get_motion_sensor_delay())
 
         if self.__config.is_motion_sensor_enabled():
             self.__motion_sensor.enable()
@@ -47,51 +51,101 @@ class App:
         Takes a screenshot and returns it as png.
         """
         try:
-            return Response(self.__screen.get_screenshot(), mimetype='image/png')
+            return Response(self.__display.get_screenshot(), mimetype='image/png')
         except Exception as e:
             return f"Error occurred: {e}", 500
 
-    def on_get_screen(self):
+    def on_get_browser(self):
         """
-        Gets the screen related configuration like dimensions, the url, the scale as well
-        as the screen orientation.
+        Gets the browser related configuration like the url and the scale.
         """
 
         return jsonify({
-            "dimensions" : self.__screen.get_orientation(),
-            "url" : self.__screen.get_url(),
-            "scale" : self.__screen.get_scale()
+            "url" : self.__browser.get_url(),
+            "scale" : self.__browser.get_scale()
         })
 
-    def on_set_screen_off(self):
+    def on_set_browser(self):
+        """
+        Sets the browser related configuration, and reloads it.
+        """
+        data = request.json
+        self.__browser.set_url(data.pop("url"))
+        self.__browser.set_scale_factor(data.pop("scale"))
+
+        self.__browser.reload()
+
+        return self.on_get_browser()
+
+    def on_set_display_off(self):
         """
         Turns the screen off.
         """
-        self.__screen.off()
-        return self.on_get_screen()
+        self.__display.off()
+        return self.on_get_screens()
 
 
-    def on_set_screen_on(self):
+    def on_set_display_on(self):
         """
         Turns the screen on.
         """
-        self.__screen.on()
-        return self.on_get_screen()
+        self.__display.on()
+        return self.on_get_screens()
 
-    def on_set_screen(self):
+    def on_get_screens(self):
+        """
+        Returns all screens attached to the system.
+        """
+        screens = []
+        for screen in self.__display.get_screens():
+            screens.append({
+                "name" : screen.get_name(),
+                "connected" : screen.is_connected(),
+                "enabled" : screen.is_enabled(),
+                "primary" : screen.is_primary(),
+                "resolution" : {
+                    "x" : screen.get_x_resolution(),
+                    "y" : screen.get_y_resolution()
+                },
+                "orientation" : screen.get_orientation()
+            })
+
+        return jsonify(screens)
+
+    def on_get_screen(self, name:str):
+        """
+        Returns a specific screen by his unique name.
+        """
+
+        screen = self.__display.get_screen(name)
+        return jsonify({
+            "name" : screen.get_name(),
+            "connected" : screen.is_connected(),
+            "enabled" : screen.is_enabled(),
+            "primary" : screen.is_primary(),
+            "resolution" : {
+                "x" : screen.get_x_resolution(),
+                "y" : screen.get_y_resolution()
+            },
+            "orientation" : screen.get_orientation()
+        })
+
+
+    def on_set_screen(self, name:str):
         """
         Sets the screen related configuration like the browser url, the scale 
         as well as the screen orientation.
         """
         data = request.json
 
-        self.__screen.set_url(data.pop("url"))
-        self.__screen.set_scale_factor(data.pop("scale"))
-        self.__screen.set_orientation(data.pop("orientation"))
+        self.__display.set_screen(name, data.pop("orientation"))
 
-        self.__screen.reload()
+        # We are racing here against the window manager reload.
+        # Thus we need to give it some time to negotiate the
+        # new screen resolutions.
+        time.sleep(2)
 
-        return self.on_get_screen()
+        return self.on_get_screen(name)
 
     # Certificate Endpoint related functions
     def on_set_cert(self):
@@ -187,6 +241,36 @@ class App:
         self.__system.set_hostname(request.json["hostname"])
         self.__system.reboot()
         return 'Schedule updated successfully, rebooting', 200
+
+    def  on_get_connections(self):
+        """
+        Gets all known network connections.
+        """
+        connections = self.__network.get_connections()
+
+        rv = []
+        for connection in connections:
+            rv.append(connection.to_serializable_object())
+
+        return jsonify(rv)
+
+    def on_forget_wifi(self):
+        """
+        Forgets all wifi connections.
+        """
+        self.__network.delete_wifi_connection(
+            request.json["ssid"])
+
+        return 'All wifi networks removed', 200
+
+    def on_add_wifi(self):
+        """
+        Adds a new wifi connection.
+        """
+        self.__network.add_wifi_connection(
+            request.json["ssid"], request.json["psk"])
+
+        return 'All wifi connection added', 200
 
     # SSH related functions
     def on_get_ssh(self):
@@ -348,15 +432,22 @@ class App:
             '/log/webservice', view_func=self.on_get_log_webservice, methods=["GET"])
 
         app.add_url_rule(
-            '/screen/screenshot.png', view_func=self.on_get_screenshot, methods=['GET'])
+            '/display/screenshot.png', view_func=self.on_get_screenshot, methods=['GET'])
         app.add_url_rule(
-            '/screen/on',  view_func=self.on_set_screen_on, methods=['GET'])
+            '/display/on',  view_func=self.on_set_display_on, methods=['GET'])
         app.add_url_rule(
-            '/screen/off',  view_func=self.on_set_screen_off, methods=['GET'])
+            '/display/off',  view_func=self.on_set_display_off, methods=['GET'])
         app.add_url_rule(
-            '/screen',  view_func=self.on_get_screen, methods=['GET'])
+            '/display/screens',  view_func=self.on_get_screens, methods=['GET'])
         app.add_url_rule(
-            '/screen',  view_func=self.on_set_screen, methods=['POST'])
+            '/display/screens/<name>',  view_func=self.on_get_screen, methods=['GET'])
+        app.add_url_rule(
+            '/display/screens/<name>',  view_func=self.on_set_screen, methods=['POST'])
+
+        app.add_url_rule(
+            '/browser',  view_func=self.on_get_browser, methods=['GET'])
+        app.add_url_rule(
+            '/browser',  view_func=self.on_set_browser, methods=['POST'])
 
         app.add_url_rule(
             '/cert', view_func=self.on_get_cert, methods=["GET"])
@@ -381,6 +472,10 @@ class App:
 
         app.add_url_rule('/hostname', view_func=self.on_get_hostname, methods=["GET"])
         app.add_url_rule('/hostname', view_func=self.on_set_hostname, methods=["POST"])
+
+        app.add_url_rule('/connections', view_func=self.on_get_connections, methods=["GET"])
+        app.add_url_rule('/connections', view_func=self.on_add_wifi, methods=["POST"])
+        app.add_url_rule('/connections', view_func=self.on_forget_wifi, methods=["DELETE"])
 
         app.add_url_rule("/reboot", view_func=self.on_reboot, methods=["GET"])
 

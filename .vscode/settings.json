@@ -7,7 +7,11 @@
         "windowmanager",
         "XINITRC",
         "XRANDR",
-        "xset"
+        "xset",
+        "webservice",
+        "motionsensor",
+        "journalctl",
+        "nmcli"
     ],
     "python.testing.unittestArgs": [
         "-v",

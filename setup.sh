@@ -6,7 +6,9 @@ if [ `id -u` -ne 0 ]
   exit
 fi
 
-update_system() { 
+DEBIAN_FRONTEND=noninteractive
+
+prepare_system() { 
   echo Update System
 
   apt-get update -qq
@@ -14,7 +16,32 @@ update_system() {
   apt-get autoremove -yy -qq
 
   apt-get install unattended-upgrades -yy -qq
+
+  debconf-set-selections <<< "unattended-upgrades unattended-upgrades/enable_auto_updates boolean true"
+  dpkg-reconfigure unattended-upgrades  --frontend=noninteractive
+
   apt-get install fail2ban -yy -qq
+
+  echo Create User
+  if ! id kiosk &> /dev/null; then
+    useradd kiosk -p!  
+  fi
+}
+
+install_network_manager() {
+  echo Installing Network Manager
+  apt-get install network-manager -yy -qq
+  apt-get purge openresolv dhcpcd5 -yy -qq
+
+  # grant the kiosk user permissions to modify wifi networks.
+  cat > /etc/polkit-1/localauthority/10-networkmanager.pkla << EOF
+[NetworkManager Permissions]
+Identity=unix-group:kiosk
+Action=org.freedesktop.NetworkManager.settings.modify.system;org.freedesktop.NetworkManager.network-control;org.freedesktop.NetworkManager.settings.modify.own;org.freedesktop.NetworkManager.enable-disable-wifi;org.freedesktop.NetworkManager.wifi.share.open;org.freedesktop.NetworkManager.wifi.share.protected
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes  
+EOF
 }
 
 install_window_manager() {
@@ -25,11 +52,25 @@ install_window_manager() {
   apt-get install unclutter -yy -qq
 
   mkdir -p /etc/kiosk
+  mkdir -p /etc/kiosk/screens.d
+
+  # Set reasonable default for our screens.
+  if [ ! -f /etc/kiosk/screens.d/HDMI-1 ]; then
+    echo "#!/bin/sh" > /etc/kiosk/screens.d/HDMI-1
+    echo "xrandr --output HDMI-1 --primary --rotate normal" >> /etc/kiosk/screens.d/HDMI-1
+    chmod 775 /etc/kiosk/screens.d/HDMI-1
+  fi
+
+  if [ ! -f /etc/kiosk/screens.d/HDMI-2 ]; then
+    echo "#!/bin/sh" > /etc/kiosk/screens.d/HDMI-2
+    echo "xrandr --output HDMI-2 --off" >> /etc/kiosk/screens.d/HDMI-2
+    chmod 775 /etc/kiosk/screens.d/HDMI-2
+  fi
+
   cat > /etc/kiosk/xinitrc << EOF
 #!/bin/sh
 
-xrandr --output HDMI-1
-xrandr --output HDMI-2 --off
+run-parts /etc/kiosk/screens.d
 
 # Turn off screensaver
 xset s off
@@ -150,7 +191,9 @@ EOF
   systemctl enable kiosk-webservice.service
 }
 
-update_system
+prepare_system
+
+install_network_manager
 install_window_manager
 install_browser
 install_application

@@ -6,7 +6,7 @@ import logging
 import os
 import threading
 from src.gpio import GpioDevice, GpioV2LineConfig
-from src.screen import Screen
+from src.display import Display
 
 class MotionSensorState(Enum):
     """
@@ -21,12 +21,12 @@ class MotionSensor:
     Controls a screen with a motion sensor.
     """
 
-    def __init__(self, screen: Screen, delay:int):
+    def __init__(self, display: Display, delay:int):
         self.__device = "/dev/gpiochip0"
         self.__line = 18
         self.__state = MotionSensorState.IDLE
 
-        self.__screen = screen
+        self.__display = display
         self.__timer = None
         self.__worker = None
         self.__delay = delay
@@ -131,18 +131,18 @@ class MotionSensor:
         """
         Cancels any turn off timers and turns the screen on.
         """
-        logging.getLogger('flask.app').error("XXXXX Turning Screen On")
+        logging.getLogger('flask.app').debug("Turning Screen On")
         self._cancel_timeout()
 
-        if self.__screen.is_off():
-            self.__screen.on()
+        if self.__display.is_off():
+            self.__display.on()
 
     def turn_off(self):
         """
         Turns off the screen.        
         """
 
-        logging.getLogger('flask.app').error("XXXXX Turning Screen On")
+        logging.getLogger('flask.app').debug("Turning Screen On")
 
         self._cancel_timeout()
-        self.__screen.off()
+        self.__display.off()

@@ -198,10 +198,16 @@
                                 <button class="nav-link active" id="kiosk-tab-common" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-common" type="button" role="tab">Kiosk</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="kiosk-tab-settings" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-settings" type="button" role="tab">System</button>
+                                <button class="nav-link" id="kiosk-tab-schedule" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-schedule" type="button" role="tab">Schedule</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="kiosk-about-settings" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-about" type="button" role="tab">About</button>
+                                <button class="nav-link" id="kiosk-tab-network" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-network" type="button" role="tab">Network</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="kiosk-tab-security" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-security" type="button" role="tab">Security</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="kiosk-tab-about" data-bs-toggle="tab" data-bs-target="#kiosk-tab-pane-about" type="button" role="tab">About</button>
                             </li>                            
                         </ul>
                         <div class="align-self-center">
@@ -213,53 +219,77 @@
                         <div class="tab-content" id="kiosk-tabs-content" >
                             <div class="tab-pane fade show active" id="kiosk-tab-pane-common" role="tabpanel">
 
-                                <!-- Template Configuration -->
-                                <h3>Screen</h3>
+                                <h3>Browser</h3>
                                 <div class="mb-3 row">
                                     <div class="col-sm-12">
                                         <p>Select the website which should be displayed.</p>
                                     </div>
                                 </div>
+
                                 <div class="mb-3 row">
-                                    <label for="kiosk-website" class="col-sm-3 col-form-label form-label">Website:</label>
+                                    <label for="kiosk-browser-url" class="col-sm-3 col-form-label form-label">Website:</label>
                                     <div class="col-sm-6">
-                                        <input type="text" class="form-control" id="kiosk-website" name="kiosk-website">
-                                    </div>
-                                </div>
-                                <div class="mb-3 row">
-                                    <label for="kiosk-resolution" class="col-sm-3 col-form-label form-label">Resolution:</label>
-                                    <div class="col-sm-6">
-                                        <input type="text" readonly class="form-control-plaintext" id="kiosk-resolution" name="kiosk-resolution">
+                                        <input type="text" class="form-control" id="kiosk-browser-url" name="kiosk-browser-url">
                                     </div>
                                 </div>
 
                                 <div class="mb-3 row">
-                                    <label for="kiosk-scale" class="col-sm-3 col-form-label form-label">Scale:</label>
+                                    <label for="kiosk-browser-scale" class="col-sm-3 col-form-label form-label">Scale:</label>
                                     <div class="col-sm-2">
-                                        <input type="number" class="form-control" id="kiosk-scale" name="kiosk-scale">
+                                        <input type="number" class="form-control" id="kiosk-browser-scale" name="kiosk-browser-scale">
                                     </div>
                                     <label class="col-sm-3 col-form-label form-label">Percent</label>
                                 </div>
 
+                                <div class="text-end">
+                                    <button type="button" id="kiosk-browser-save" class="btn btn-primary">Save</button>
+                                </div>
+
+                                <hr>
+
+                                <h3>Display</h3>
                                 <div class="mb-3 row">
-                                    <label for="kiosk-orientation" class="col-sm-3 col-form-label form-label">Orientation:</label>
+                                    <div class="col-sm-12">
+                                        <p>Selects the graphics output port is used by the browser. Only one port can be active at any time.</p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <label for="kiosk-screen-primary" class="col-sm-3 col-form-label form-label">Output Port:</label>
+                                    <div class="col-sm-4">
+                                        <select class="form-select"  id="kiosk-screen-primary">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <label for="kiosk-screen-output" class="col-sm-3 col-form-label">Port Status:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" readonly class="form-control-plaintext" id="kiosk-screen-output">
+                                    </div>
+                                </div>                                
+                                <div class="row">
+                                    <label for="kiosk-screen-monitor" class="col-sm-3 col-form-label">Monitor:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" readonly class="form-control-plaintext" id="kiosk-screen-monitor">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <label for="kiosk-screen-orientation" class="col-sm-3 col-form-label">Orientation:</label>
                                     <div class="col-sm-2">
-                                        <select class="form-select" id="kiosk-orientation">
+                                        <select class="form-select" id="kiosk-screen-orientation">
                                             <option selected value="normal">0</option>
                                             <option value="right">90</option>
                                             <option value="inverted">180</option>
                                             <option value="left">270</option>
-                                          </select>
+                                        </select>
                                     </div>
                                     <label class="col-sm-3 col-form-label form-label">Degrees</label>
                                 </div>
-
-                                <div class="text-end">
-                                    <button type="button" id="kiosk-screen-off" class="btn btn-outline-secondary">Turn Off</button>
-                                    <button type="button" id="kiosk-screen-on" class="btn btn-outline-secondary">Turn On</button>
-                                    <button type="button" id="kiosk-screen-save" class="btn btn-primary">Save</button>
+                                <div class="text-end mt-3">
+                                    <button type="button" id="kiosk-screen-off" class="btn btn-outline-secondary">Turn Off Monitor</button>
+                                    <button type="button" id="kiosk-screen-on" class="btn btn-outline-secondary">Turn On Monitor</button>                                        
+                                    <button type="button" id="kiosk-screen-save" class="btn btn-primary">Enable Output Port</button>
                                 </div>
-                                
+
                                 <hr>
 
                                 <h3>Preview</h3>
@@ -277,7 +307,9 @@
                                 </div>
 
                                 <hr>
+                            </div>
 
+                            <div class="tab-pane fade" id="kiosk-tab-pane-schedule" role="tabpanel">
                                 <h3>Schedule</h3>
                                 <template id="kiosk-schedule-template">
                                     <li class="list-group-item">
@@ -290,9 +322,10 @@
                                             <span class="kiosk-schedule-weekday"></span>
                                         </div>
                                         <div class="kiosk-schedule-description"></div>
-                                        <div class="text-end">
-                                            <button type="button" class="btn btn-outline-secondary kiosk-schedule-edit">Edit</button>
-                                            <button type="button" class="btn btn-outline-secondary kiosk-schedule-delete">Delete</button>
+                                        <div class="text-end mt-1">
+                                            <btn ></btn>
+                                            <button type="button" class="btn btn-secondary btn-sm kiosk-schedule-edit">Edit</button>
+                                            <button type="button" class="btn btn-secondary btn-sm kiosk-schedule-delete">Delete</button>
                                         </div>
                                     </li>
                                 </template>
@@ -329,7 +362,68 @@
                                 </div>
                             </div>
 
-                            <div class="tab-pane fade" id="kiosk-tab-pane-settings" role="tabpanel">
+                            <div class="tab-pane fade" id="kiosk-tab-pane-network" role="tabpanel">
+                                <h3>Hostname</h3>
+                                <div class="mb-3 row">
+                                    <label for="kiosk-hostname" class="col-sm-3 col-form-label form-label">Hostname:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" id="kiosk-hostname" name="kiosk-hostname">
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-primary" id="kiosk-hostname-update">Update Hostname</button>
+                                </div>
+
+                                <hr/>
+
+                                <h3>Connections</h3>
+                                <div class="col-sm-12">
+                                    <p>It will automatically pick the fastest and most reliable connection which is available</p>
+                                </div> 
+
+                                <template id="kiosk-connections-template">
+                                    <li class="list-group-item">
+                                        <div class="mb-1 fw-bold kiosk-connection-title">Wifi SSID {...}</div>
+                                        <p class="mb-1 ms-4">IPv4: <span class="kiosk-connection-ip4-address"></span></p>
+                                        <p class="mb-1 ms-4">IPv6: <span class="kiosk-connection-ip6-address"></span></p>
+                                        <div class="text-end">
+                                            <button type="button" class="btn btn-secondary btn-sm kiosk-connection-forget">Delete</button>
+                                        </div>                                        
+                                    </li>
+                                </template>
+
+                                <ul id="kiosk-connections" class="list-group list-group-flush">
+                                </ul>
+                                
+                                <hr/>
+
+                                <h3>Add Wifi Connection</h3>
+                                <div class="col-sm-12">
+                                    <p>Adds a new WiFi configuration to the connections list.</p>
+                                </div>                                
+                                <div class="mb-3 row">
+                                    <label for="kiosk-wifi-ssid" class="col-sm-3 col-form-label form-label">SSID:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" id="kiosk-wifi-ssid" name="kiosk-wifi-ssid">
+                                    </div>
+                                </div>
+                                <div class="mb-3 row">
+                                    <label for="kiosk-wifi-psk" class="col-sm-3 col-form-label form-label">Passkey:</label>
+                                    <div class="col-sm-6">
+                                        <input type="text" class="form-control" id="kiosk-wifi-psk" name="kiosk-wifi-psk">
+                                    </div>
+                                </div>                                
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-primary" id="kiosk-wifi-add">Add</button>
+                                </div>
+
+
+
+
+
+                            </div>
+
+                            <div class="tab-pane fade" id="kiosk-tab-pane-security" role="tabpanel">
 
                                 <!-- Password -->
                                 <h3>Password</h3>
@@ -352,18 +446,7 @@
                                 </div>
 
                                 <hr>
-                                <h3>Hostname</h3>
-                                <div class="mb-3 row">
-                                    <label for="kiosk-hostname" class="col-sm-3 col-form-label form-label">Hostname:</label>
-                                    <div class="col-sm-6">
-                                        <input type="text" class="form-control" id="kiosk-hostname" name="kiosk-hostname">
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <button type="button" class="btn btn-primary" id="kiosk-hostname-update">Update Hostname</button>
-                                </div>
 
-                                <hr/>
                                 <h3>Certificate</h3>
                                 <p>
                                     The connection is encrypted by an auto generated self signed certificate, a new cert can be regenerated at any time.

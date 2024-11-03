@@ -1,0 +1,71 @@
+Screen 0: minimum 320 x 200, current 3840 x 2160, maximum 7680 x 7680
+HDMI-1 disconnected primary 3840x2160+0+0 (0x47) normal (normal left inverted right x axis y axis) 0mm x 0mm
+        Identifier: 0x44
+        Timestamp:  10415
+        Subpixel:   unknown
+        Gamma:      1.0:1.0:1.0
+        Brightness: 1.0
+        Clones:
+        CRTC:       0
+        CRTCs:      0
+        Transform:  1.000000 0.000000 0.000000
+                    0.000000 1.000000 0.000000
+                    0.000000 0.000000 1.000000
+                   filter:
+        Output format: Automatic
+                supported: Automatic, RGB, YCbCr 4:2:2, YCbCr 4:4:4
+        Broadcast RGB: Automatic
+                supported: Automatic, Full, Limited 16:235
+        max bpc: 8
+                range: (8, 12)
+        bottom margin: 0
+                range: (0, 100)
+        top margin: 0
+                range: (0, 100)
+        right margin: 0
+                range: (0, 100)
+        left margin: 0
+                range: (0, 100)
+        Colorspace: Default
+                supported: Default, SMPTE_170M_YCC, BT709_YCC, XVYCC_601, XVYCC_709, SYCC_601, opYCC_601, opRGB, BT2020_CYCC, BT2020_RGB, BT2020_YCC, DCI-P3_RGB_D65, DCI-P3_RGB_Theater
+        link-status: Good
+                supported: Good, Bad
+        CONNECTOR_ID: 32
+                supported: 32
+        non-desktop: 0
+                range: (0, 1)
+HDMI-2 disconnected (normal left inverted right x axis y axis)
+        Identifier: 0x45
+        Timestamp:  10415
+        Subpixel:   unknown
+        Clones:
+        CRTCs:      4
+        Transform:  1.000000 0.000000 0.000000
+                    0.000000 1.000000 0.000000
+                    0.000000 0.000000 1.000000
+                   filter:
+        Output format: Automatic
+                supported: Automatic, RGB, YCbCr 4:2:2, YCbCr 4:4:4
+        Broadcast RGB: Automatic
+                supported: Automatic, Full, Limited 16:235
+        max bpc: 8
+                range: (8, 12)
+        bottom margin: 0
+                range: (0, 100)
+        top margin: 0
+                range: (0, 100)
+        right margin: 0
+                range: (0, 100)
+        left margin: 0
+                range: (0, 100)
+        Colorspace: Default
+                supported: Default, SMPTE_170M_YCC, BT709_YCC, XVYCC_601, XVYCC_709, SYCC_601, opYCC_601, opRGB, BT2020_CYCC, BT2020_RGB, BT2020_YCC, DCI-P3_RGB_D65, DCI-P3_RGB_Theater
+        link-status: Good
+                supported: Good, Bad
+        CONNECTOR_ID: 42
+                supported: 42
+        non-desktop: 0
+                range: (0, 1)
+  3840x2160 (0x47) 297.000MHz +HSync +VSync
+        h: width  3840 start 4016 end 4104 total 4400 skew    0 clock  67.50KHz
+        v: height 2160 start 2168 end 2178 total 2250           clock  30.00Hz

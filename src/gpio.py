@@ -398,7 +398,7 @@ class GpioDevice:
 
         self.__fd = -1
 
-    def get_lines(self,name, lines, config):
+    def get_lines(self, name:str, lines, config):
         """
         Gets the lines from the gpio device.
         """
