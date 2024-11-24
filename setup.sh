@@ -26,6 +26,8 @@ prepare_system() {
   if ! id kiosk &> /dev/null; then
     useradd kiosk -p!  
   fi
+
+  # usermod -aG netdev kiosk
 }
 
 install_network_manager() {
@@ -34,7 +36,7 @@ install_network_manager() {
   apt-get purge openresolv dhcpcd5 -yy -qq
 
   # grant the kiosk user permissions to modify wifi networks.
-  cat > /etc/polkit-1/localauthority/10-networkmanager.pkla << EOF
+  cat > /etc/polkit-1/localauthority/50-local.d/networkmanager.pkla << EOF
 [NetworkManager Permissions]
 Identity=unix-group:kiosk
 Action=org.freedesktop.NetworkManager.settings.modify.system;org.freedesktop.NetworkManager.network-control;org.freedesktop.NetworkManager.settings.modify.own;org.freedesktop.NetworkManager.enable-disable-wifi;org.freedesktop.NetworkManager.wifi.share.open;org.freedesktop.NetworkManager.wifi.share.protected
